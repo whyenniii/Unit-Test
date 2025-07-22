@@ -1,4 +1,4 @@
-package wisioft.io;
+package wisoft.io.student;
 
 public record StudentResult(boolean success, String reason) {
     public static StudentResult ok() {

@@ -1,4 +1,4 @@
-package wisioft.io;
+package wisoft.io.student;
 
 public class Student {
     private final String id;

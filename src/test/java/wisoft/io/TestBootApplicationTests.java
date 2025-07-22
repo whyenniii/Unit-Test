@@ -1,4 +1,4 @@
-package wisioft.io;
+package wisoft.io;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

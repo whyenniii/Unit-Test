@@ -1,4 +1,4 @@
-package wisioft.io;
+package wisoft.io.student;
 
 import java.util.HashMap;
 import java.util.Map;
