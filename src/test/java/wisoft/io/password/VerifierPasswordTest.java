@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.time.DayOfWeek;
@@ -166,17 +165,6 @@ class VerifierPasswordTest {
 //            assertTrue(result.passed());
 //        }
 
-        public static void verifyPassword(String input, Object rules) {
-            DayOfWeek dayOfWeek = LocalDate.now().getDayOfWeek();
-
-            if (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY) {
-                throw new IllegalStateException("It's the weekend!");
-            }
-
-            // 다른 코드 작성
-
-            //발견한 오류를 반환
-        }
     }
 
     @Nested
@@ -185,8 +173,8 @@ class VerifierPasswordTest {
         private final DayOfWeek today = LocalDate.now().getDayOfWeek();
 
         @Test
-        @DisplayName("on weekends, throws exceptions")
-        void onWeekendsThrowsException() {
+        @DisplayName("when its the weekend, throws an error")
+        void whenWeekendsThrowsException() {
             if (today == DayOfWeek.SATURDAY || today == DayOfWeek.SUNDAY) {
                 VerifierPassword verifier = makeVerifier();
                 Exception e = assertThrows(RuntimeException.class, () -> {
@@ -269,16 +257,16 @@ class VerifierPasswordTest {
 //        }
 //    }
 
-//    @Nested
-//    @DisplayName("inject test")
-//    public class PasswordVerifierShimTest {
+    @Nested
+    @DisplayName("inject test")
+    class PasswordVerifierShimTest {
 
 //        @Test
 //        void throwsOnWeekend_usingInjectedDay() {
 //            Runnable reset = VerifierPasswordShim.inject(() -> DayOfWeek.SUNDAY);
 //
 //            try {
-//                assertThatThrownBy(() -> VerifierPasswordShim.verifyPassword("anything", List.of()))
+//                assertThatThrownBy(() -> VerifierPasswordShim.verifyPassword("any input", List.of()))
 //                        .isInstanceOf(RuntimeException.class)
 //                        .hasMessage("It's the weekend!");
 //            } finally {
@@ -287,22 +275,67 @@ class VerifierPasswordTest {
 //            }
 //        }
 
+        @Test
+        @DisplayName("when it's the weekend, throws an error")
+        void throwsErrorOnWeekend() {
+            //SATURDAY
+            Supplier<DayOfWeek> saturday = () -> DayOfWeek.SATURDAY;
+
+            //주입하고 reset 핸들러 반환받기
+            Runnable reset = VerifierPasswordShim.inject(saturday);
+
+            try {
+                assertThrows(RuntimeException.class, () ->
+                        VerifierPasswordShim.verifyPassword("any input"), "It's the weekend!");
+            } finally {
+                //테스트 이후 복원
+                reset.run();
+            }
+        }
+    }
+
+
+    //예제 3-10 생성자 주입 방식
+//    @Nested
+//    @DisplayName("class constructor")
+//    class PasswordVerifier {
 //        @Test
-//        @DisplayName("when it's the weekend, throws an error")
-//        void throwsErrorOnWeekend() {
-//            //SATURDAY로
-//            Supplier<DayOfWeek> alwaysSaturday = () -> DayOfWeek.SATURDAY;
+//        @DisplayName("on weekends, throws exception")
+//        void onWeekendsThrowsException() {
+//            DayOfWeek sunday = DayOfWeek.SUNDAY;
 //
-//            //주입하고 reset 핸들러를 반환받기
-//            Runnable reset = VerifierPasswordShim.inject(alwaysSaturday);
+//            VerifierPasswordInjection verifier = new VerifierPasswordInjection(List.of(), sunday);
 //
-//            try {
-//                assertThrows(RuntimeException.class, () ->
-//                        VerifierPasswordShim.verifyPassword("any input"), "It's the weekend!");
-//            } finally {
-//                //테스트 이후 복원
-//                reset.run();
-//            }
+//            RuntimeException exception = assertThrows(RuntimeException.class, () -> verifier.verify("anything"));
+//
+//            assertEquals("It's the weekend!", exception.getMessage());
+//        }
+//
+//        private VerifierPasswordInjection makeVerifier(List<Rule> rules, DayOfWeek dayFn) {
+//            return new VerifierPasswordInjection(rules, dayFn);
+//        }
+//
+//        @Test
+//        @DisplayName("refactor with constructor")
+//        void refactorWithConstructor() {
+//            DayOfWeek sunday = DayOfWeek.SUNDAY;
+//            VerifierPasswordInjection verifier = makeVerifier(List.of(), sunday);
+//
+//            RuntimeException exception = assertThrows(RuntimeException.class, () -> verifier.verify("anything"));
+//
+//            assertEquals("It's the weekend!", exception.getMessage());
+//        }
+//
+//        @Test
+//        @DisplayName("on weekdays, with no rules, passes")
+//        void onWeekdaysWithNoRulesPassed() {
+//            DayOfWeek monday = DayOfWeek.MONDAY;
+//            VerifierPasswordInjection verifier = makeVerifier(List.of(), monday);
+//
+//            List<String> result = verifier.verify("anything");
+//
+//            assertEquals(0, result.size());
+//
 //        }
 //    }
 
@@ -323,49 +356,20 @@ class VerifierPasswordTest {
 //        }
 //    }
 
-//    @Nested
-//    @DisplayName("password verifier factory test")
-//    class PasswordVerifierFactoryTest {
-//
-//        private VerifierPasswordInjection makeVerifier(List<Rule> rules, Supplier<DayOfWeek> dayFn) {
-//            return new VerifierPasswordInjection(rules, dayFn);
-//        }
-//
-//        @Test
-//        @DisplayName("class constructor: on weekends, throws exceptions")
-//        void throwsExceptionOnWeekend() {
-//            Supplier<DayOfWeek> alwaysSunday = () -> DayOfWeek.SUNDAY;
-//            VerifierPasswordInjection verifier = makeVerifier(List.of(), alwaysSunday);
-//
-//            RuntimeException exception = assertThrows(RuntimeException.class, () ->
-//                    verifier.verify("anything"));
-//
-//            assertEquals("It's the weekend!", exception.getMessage());
-//        }
-//
-//        @Test
-//        @DisplayName("class constructor: on weekdays, with no rules, passes")
-//        void passesOnWeekdayWithNoRules() {
-//            Supplier<DayOfWeek> alwaysMonday = () -> DayOfWeek.MONDAY;
-//            VerifierPasswordInjection verifier = makeVerifier(List.of(), alwaysMonday);
-//
-//            List<String> result = verifier.verify("anything");
-//            assertEquals(0, result.size());
-//        }
-//    }
-//    @Nested
-//    @DisplayName("password test")
-//    public class PasswordVerifierTest {
-//
-//        @Test
-//        void onWeekendsThrowsException() {
-//            FakeTimeProvider fakeSunday = new FakeTimeProvider(DayOfWeek.SUNDAY);
-//            VerifierPasswordInjection verifier = new VerifierPasswordInjection(Collections.emptyList(), fakeSunday);
-//
-//            RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-//                verifier.verify("anything");
-//            });
-//
-//            assertEquals("It's the weekend!", exception.getMessage());
-//        }
-//    }
+    @Nested
+    @DisplayName("password test")
+    class VerifierPassword4Test {
+
+        @Test
+        @DisplayName("on weekends, throws exception")
+        void onWeekendsThrowsException() {
+            FakeTimeProvider fakeSunday = new FakeTimeProvider(DayOfWeek.SUNDAY);
+            VerifierPasswordInjection verifier = new VerifierPasswordInjection(List.of(), fakeSunday);
+
+            RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+                verifier.verify("anything");
+            });
+
+            assertEquals("It's the weekend!", exception.getMessage());
+        }
+    }
